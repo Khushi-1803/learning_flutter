@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:quiz_app/strat_screen.dart';
 import 'package:quiz_app/questiions.dart';
+import 'package:quiz_app/data/questions.dart';
+import 'package:quiz_app/result_screen.dart';
+
 class Quiz extends StatefulWidget {
   const Quiz({super.key});
 
@@ -11,29 +14,36 @@ class Quiz extends StatefulWidget {
 }
 
 class _QuizState extends State<Quiz> {
-  // Widget activeScreen = StartScreen(switchScreen); erroe is coming Class = नक्शा, और Instance/Object = उस नक्शे से बना असली object।
+  final List<String> selectedOptions = [];
+  var activeScreen = 'start-screen';
 
-// activeScreen और switchScreen() उसी object के instance members हैं।
-// यहाँ Dart पहले activeScreen को बनाने की कोशिश कर रहा है: और आप उसी समय कह रहे हो: "इस object का switchScreen function ले लो।"
-// इसलिए switchScreen को activeScreen बनाते समय use करने के बजाय initState() में use करते हैं, क्योंकि तब object पूरी तरह बन चुका होता है।
-
-// Widget? activeScreen;
-
-// @override
-// void initState() {
-//     super.initState();
-//     activeScreen = StartScreen(switchScreen);
-//   }
-var activeScreen = 'start-screen';
-
-void switchScreen() {
+  void switchScreen() {
     setState(() {
       activeScreen = 'question-screen';
-      // activeScreen = const QuestionScreen();
     });
-}
+  }
+
+  void chooseAnswer(String option) {
+    selectedOptions.add(option);
+
+    if (selectedOptions.length == questions.length) {
+      setState(() {
+        activeScreen = 'result-screen';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final Widget screenWidget;
+    if (activeScreen == 'start-screen') {
+      screenWidget = StartScreen(switchScreen);
+    } else if (activeScreen == 'result-screen') {
+      screenWidget = ResultScreen(choosenOptions: selectedOptions);
+    } else {
+      screenWidget = QuestionScreen(onSelectOption: chooseAnswer);
+    }
+
     return MaterialApp(
       home: Scaffold(
         body: Container(
@@ -47,9 +57,7 @@ void switchScreen() {
               end: Alignment.bottomRight,
             ),
           ),
-          child: activeScreen == 'start-screen'
-              ? StartScreen(switchScreen)
-              : const QuestionScreen(),
+          child: screenWidget,
         ),
       ),
     );

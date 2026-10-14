@@ -1,9 +1,16 @@
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:track_expences/model/expense.dart';
+
+
+final formatter = DateFormat.yMd();
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
 
+  final void Function(Expense expense) onAddExpense;  //Ye variable parent se mile function ko store karta hai.
+ 
   @override
   State<NewExpense> createState() => _NewExpenseState();
 }
@@ -11,6 +18,60 @@ class NewExpense extends StatefulWidget {
 class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
+  DateTime? _selectedDate;
+  Category _selectedCategory = Category.food;
+
+  void _presentDatePicker() async {
+    
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year - 1, now.month, now.day);
+    final lastDate = DateTime(now.year + 1, now.month, now.day);
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    }
+  }
+
+  void _submitExpensesData() {
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+    if(_titleController.text.trim().isEmpty || amountIsInvalid || _selectedDate == null){
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Invalid Input'),
+          content: const Text('Please make sure a valid title, amount, date and category was entered.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text('Okay'),
+            ),
+          ],
+        ),
+      );
+      return;
+
+    }
+    widget.onAddExpense(Expense(
+      title: _titleController.text,
+      amount: enteredAmount,
+      date: _selectedDate!,
+      category: _selectedCategory,
+    ));
+
+    Navigator.pop(context);
+  }
 
   @override
   void dispose() {
@@ -22,7 +83,7 @@ class _NewExpenseState extends State<NewExpense> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
       child: Column(
         children: [
           TextField(
@@ -52,9 +113,9 @@ class _NewExpenseState extends State<NewExpense> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('Selected Date'),
+                     Text(_selectedDate == null ? 'No Date Chosen' : formatter.format(_selectedDate!),),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: _presentDatePicker,
                       icon: const Icon(Icons.calendar_month),
                     ),
                   ],
@@ -63,7 +124,23 @@ class _NewExpenseState extends State<NewExpense> {
             ],
           ),
           Row(
+           
             children: [
+              DropdownButton(
+                value: _selectedCategory,
+                items:Category.values.map((category) => DropdownMenuItem(value: category, child: Text(category.name.toUpperCase()),),).toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedCategory = value; // Update the selected category
+                    // Update the selected category
+                  });
+                },
+                
+            ),
+             const SizedBox(width: 16),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
@@ -71,10 +148,7 @@ class _NewExpenseState extends State<NewExpense> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  print('Title: ${_titleController.text}');
-                  print('Amount: ${_amountController.text}');
-                },
+                onPressed: _submitExpensesData,
                 child: const Text('Save Expense'),
               ),
             ],
@@ -84,3 +158,18 @@ class _NewExpenseState extends State<NewExpense> {
     );
   }
 }
+
+// Step 1: + button par click
+// _openAddExpenseOverlay() call hota hai.
+
+// Step 2: NewExpense open hota hai
+// User title, amount, date aur category enter karta hai.
+
+// Step 3: Save Expense par click
+// _submitExpensesData() ek naya Expense object banata hai.
+
+// Step 4: onAddExpense(expense)
+// Ye callback parent widget ke _addExpense() method ko call karta hai.
+
+// Step 5: setState() + add()
+// Expense list mein add hota hai aur home screen rebuild hokar updated list dikhati hai.

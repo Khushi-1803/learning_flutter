@@ -37,3 +37,26 @@ class Expense{
 //this.date means "Take the value given to the constructor and store it inside this object's date variable."
 //  Dart mein class ek blueprint hoti hai, jisme Expense ke andar id, date, title aur amount store hote hain.
 // required fields ko compulsory banata hai, aur uuid.v4() har new expense ke liye automatically unique ID generate karta hai.
+
+
+class ExpenseBucket {
+  const ExpenseBucket({
+    required this.category,
+    required this.expenses,
+  });
+
+  ExpenseBucket.forCategory(List<Expense> allExpenses, this.category): expenses = allExpenses.where((expense)=>expense.category == category).toList();
+
+  final Category category;
+  final List<Expense> expenses;
+
+  double get totalExpenses {
+    double sum = 0;
+
+    for (final expense in expenses) {
+      sum += expense.amount;
+    }
+
+    return sum;
+  }
+}

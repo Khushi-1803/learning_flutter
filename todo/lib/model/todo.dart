@@ -1,10 +1,10 @@
 
 class   Todo{
   Todo({
-    required this.id,
+    required this.sno,
     required this.title,
   }); 
-  final int id;
+  final int sno;
   final String title;
 
 }
